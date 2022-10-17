@@ -1,5 +1,6 @@
 use teloxide::types::{MessageEntity, MessageEntityKind};
 use teloxide::{
+    dispatching::update_listeners::webhooks,
     prelude::*,
     types::{
         InlineQueryResult, InlineQueryResultArticle, InputMessageContent, InputMessageContentText,
@@ -16,6 +17,21 @@ async fn main() {
     // set bot token here
     // for unix shell: `export TELOXIDE_TOKEN=<Your token here>`
     let bot = Bot::from_env();
+
+    // Binding address for webhook, using 127.0.0.1:12221 for my setup
+    let webhook_addr = ([127, 0, 0, 1], 12221).into();
+
+    // Url of webhook endpoint from reverse proxy (e.g. nginx/ngrok)
+    // HTTPS with a valid certificate is required
+    // reverse proxy need to run on port 443, 80, 88, or 8443
+    let webhook_url = "https://example.com:443/vxtwitterbot/".parse().unwrap();
+
+    let webhook_listener = webhooks::axum(
+        bot.clone(),
+        webhooks::Options::new(webhook_addr, webhook_url),
+    )
+    .await
+    .expect("Couldn't setup webhook");
 
     let handler = Update::filter_inline_query().branch(dptree::endpoint(
         |bot: Bot, q: InlineQuery| async move {
@@ -91,7 +107,10 @@ async fn main() {
     Dispatcher::builder(bot, handler)
         .enable_ctrlc_handler()
         .build()
-        .dispatch()
+        .dispatch_with_listener(
+            webhook_listener,
+            LoggingErrorHandler::with_custom_text("An error from the update listener"),
+        )
         .await;
 }
 
