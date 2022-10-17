@@ -36,11 +36,11 @@ async fn main() {
     let handler = Update::filter_inline_query().branch(dptree::endpoint(
         |bot: Bot, q: InlineQuery| async move {
             let query_url = parse_url(&q.query);
-
             if query_url.is_err() {
                 return respond(());
             }
             let query_url: Url = query_url.unwrap();
+            let path = query_url.path();
 
             // vxtwitter.com
             let vxtwitter = InlineQueryResultArticle::new(
@@ -48,46 +48,36 @@ async fn main() {
                 "Click to send",
                 InputMessageContent::Text(
                     // result message starts with a `zero-width space`
-                    InputMessageContentText::new(format!(
-                        "​https://twitter.com{}",
-                        query_url.path()
-                    ))
-                    // hyperlink the `zero-width space` for link preview
-                    .entities(vec![MessageEntity::new(
-                        MessageEntityKind::TextLink {
-                            url: Url::parse(&format!("https://vxtwitter.com{}", query_url.path()))
-                                .unwrap(),
-                        },
-                        0,
-                        1,
-                    )]),
+                    InputMessageContentText::new(format!("​https://twitter.com{path}"))
+                        // hyperlink the `zero-width space` for link preview
+                        .entities(vec![MessageEntity::new(
+                            MessageEntityKind::TextLink {
+                                url: Url::parse(&format!("https://vxtwitter.com{path}")).unwrap(),
+                            },
+                            0,
+                            1,
+                        )]),
                 ),
             )
-            .description(format!("https://vxtwitter.com{}", query_url.path()));
+            .description(format!("https://vxtwitter.com{path}"));
 
             // c.vxtwitter.com (to combine multiple images)
             let cvxtwitter = InlineQueryResultArticle::new(
                 "01".to_string(),
                 "Combine multiple images (if any)",
                 InputMessageContent::Text(
-                    InputMessageContentText::new(format!(
-                        "​https://twitter.com{}",
-                        query_url.path()
-                    ))
-                    .entities(vec![MessageEntity::new(
-                        MessageEntityKind::TextLink {
-                            url: Url::parse(&format!(
-                                "https://c.vxtwitter.com{}",
-                                query_url.path()
-                            ))
-                            .unwrap(),
-                        },
-                        0,
-                        1,
-                    )]),
+                    InputMessageContentText::new(format!("​https://twitter.com{path}")).entities(
+                        vec![MessageEntity::new(
+                            MessageEntityKind::TextLink {
+                                url: Url::parse(&format!("https://c.vxtwitter.com{path}")).unwrap(),
+                            },
+                            0,
+                            1,
+                        )],
+                    ),
                 ),
             )
-            .description(format!("https://c.vxtwitter.com{}", query_url.path()));
+            .description(format!("https://c.vxtwitter.com{path}"));
 
             let results = vec![
                 InlineQueryResult::Article(cvxtwitter),
@@ -95,7 +85,6 @@ async fn main() {
             ];
 
             let response = bot.answer_inline_query(&q.id, results).send().await;
-
             if let Err(err) = response {
                 log::error!("Error in handler: {:?}", err);
             }
@@ -118,7 +107,7 @@ async fn main() {
 ///
 /// # Errors
 ///
-/// [`ParseError`] will be returned for any invalid strings not meeting the conditions (see code below)
+/// [`ParseError`] will be returned for any strings not meeting the conditions (see code below)
 fn parse_url(url: &str) -> Result<Url, ParseError> {
     // Url is valid
     let parsed_url = Url::parse(url)?;
