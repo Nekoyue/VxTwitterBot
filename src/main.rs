@@ -42,7 +42,7 @@ async fn main() {
             let query_url: Url = query_url.unwrap();
             let path = query_url.path();
 
-            // vxtwitter.com
+            // vxtwitter.com/.../1 display the first image
             let vxtwitter = InlineQueryResultArticle::new(
                 "00".to_string(),
                 "Click to send",
@@ -52,16 +52,16 @@ async fn main() {
                         // hyperlink the `zero-width space` for link preview
                         .entities(vec![MessageEntity::new(
                             MessageEntityKind::TextLink {
-                                url: Url::parse(&format!("https://vxtwitter.com{path}")).unwrap(),
+                                url: Url::parse(&format!("https://vxtwitter.com{path}/1")).unwrap(),
                             },
                             0,
                             1,
                         )]),
                 ),
             )
-            .description(format!("https://vxtwitter.com{path}"));
+            .description(format!("https://vxtwitter.com{path}/1"));
 
-            // c.vxtwitter.com (to combine multiple images)
+            // vxtwitter.com (to combine multiple images)
             let cvxtwitter = InlineQueryResultArticle::new(
                 "01".to_string(),
                 "Combine multiple images (if any)",
@@ -69,7 +69,7 @@ async fn main() {
                     InputMessageContentText::new(format!("​https://twitter.com{path}")).entities(
                         vec![MessageEntity::new(
                             MessageEntityKind::TextLink {
-                                url: Url::parse(&format!("https://c.vxtwitter.com{path}")).unwrap(),
+                                url: Url::parse(&format!("https://vxtwitter.com{path}")).unwrap(),
                             },
                             0,
                             1,
@@ -77,7 +77,7 @@ async fn main() {
                     ),
                 ),
             )
-            .description(format!("https://c.vxtwitter.com{path}"));
+            .description(format!("https://vxtwitter.com{path}"));
 
             let results = vec![
                 InlineQueryResult::Article(cvxtwitter),
